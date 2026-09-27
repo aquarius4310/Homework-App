@@ -16,6 +16,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-ap
 header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
 h1{font-size:22px;margin:0}
 .sub{color:var(--mute);margin:2px 0 0;font-size:13px}
+.linkbtn:disabled{cursor:default;text-decoration:none}
 .linkbtn{background:none;border:0;color:var(--mute);font:13px system-ui,sans-serif;cursor:pointer;text-decoration:underline;padding:0}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;align-items:start}
@@ -123,11 +124,11 @@ function parse(body){
  return {out,meta};
 }
 
-async function load(){
- const is=await gh("GET",`/repos/${REPO}/issues/${ISSUE}`);
+async function load(force){
+ const is=await gh("GET",`/repos/${REPO}/issues/${ISSUE}?t=${Date.now()}`);
  const p=parse(is.body);data=p.out;
  $("asof").textContent=(p.meta||"").replace(/\.$/,"")+".";
- render();
+ render(force);
 }
 async function edit(fn){
  const is=await gh("GET",`/repos/${REPO}/issues/${ISSUE}`);
@@ -203,7 +204,12 @@ document.addEventListener("submit",async e=>{
  render(true);showMsg("");
  try{await addItem(kind,key,name,date);setTimeout(()=>load().catch(()=>{}),70000)}catch(err){if(err.message!=="auth")showMsg("Could not add that. "+err.message);load().catch(()=>{})}
 });
-$("refresh").onclick=()=>load().catch(err=>{if(err.message!=="auth")showMsg("Could not load. "+err.message)});
+$("refresh").onclick=async()=>{
+ const b=$("refresh");if(b.disabled)return;b.disabled=true;b.textContent="Refreshing...";openForm=null;
+ try{await load(true);showMsg("");const t=new Date();b.textContent="Up to date "+t.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})}
+ catch(err){b.textContent="Refresh";if(err.message!=="auth")showMsg("Could not load. "+err.message)}
+ setTimeout(()=>{b.textContent="Refresh";b.disabled=false},4000);
+};
 $("signout").onclick=()=>{setTok("");token="";showLogin("")};
 function showLogin(m){$("login").hidden=false;$("app").hidden=true;$("signout").hidden=true;$("asof").textContent="Signed out";showMsg(m||"")}
 async function start(){
