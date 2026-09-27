@@ -66,10 +66,11 @@ form.login input[type=password]{width:100%;font-size:15px;padding:8px 10px}
  <div><button class="linkbtn" id="refresh" type="button">Refresh</button> &nbsp; <button class="linkbtn" id="signout" type="button" hidden>Sign out</button></div>
 </header>
 <div id="msg" class="msg" hidden></div>
-<form class="login" id="login" hidden>
+<form class="login" id="login" method="post" action="#" hidden>
  <strong>Sign in</strong>
- <p class="note">Paste your GitHub token for the Homework repo. It only stays in this browser.</p>
- <input type="password" id="tok" autocomplete="off" required aria-label="Token">
+ <p class="note">Paste your GitHub token for the Homework repo. If your browser offers to save it as a password, say yes, then it fills in on your other devices too.</p>
+ <input type="text" name="username" value="homework-page" autocomplete="username" hidden readonly>
+ <input type="password" id="tok" name="password" autocomplete="current-password" required aria-label="Token">
  <label class="check"><input type="checkbox" id="remember" checked> Remember on this device. Turn off on school or shared computers.</label>
  <div class="acts"><button class="primary" type="submit">Open my list</button></div>
 </form>
