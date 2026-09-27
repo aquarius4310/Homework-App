@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Homework</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect x='1' y='1' width='14' height='14' rx='3' fill='%232f5fb3'/><path d='M4 8.5l2.5 2.5L12 5.5' stroke='white' stroke-width='2' fill='none'/></svg>">
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--ink:#1b2230;--mute:#5d6778;--line:#dde2ea;--accent:#2f5fb3;--accentink:#fff;--warn:#b4531a;--done:#9aa3b2;--field:#fff;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#12151b;--card:#1a1f28;--ink:#e6eaf1;--mute:#98a2b3;--line:#2a313d;--accent:#7ea6ec;--accentink:#10151f;--warn:#f0a070;--done:#5b6474;--field:#12151b;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:20px 16px 40px}
+.wrap{max-width:860px;margin:0 auto;display:grid;gap:16px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+h1{font-size:22px;margin:0}
+.sub{color:var(--mute);margin:2px 0 0;font-size:13px}
+.linkbtn{background:none;border:0;color:var(--mute);font:13px system-ui,sans-serif;cursor:pointer;text-decoration:underline;padding:0}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs button{font:600 15px system-ui,sans-serif;color:var(--mute);background:none;border:0;border-bottom:2px solid transparent;padding:8px 12px;cursor:pointer;margin-bottom:-1px;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabs .n{font-size:12px;color:var(--mute);margin-left:4px}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.panel{display:grid;gap:14px}
+.bar{display:flex;justify-content:flex-end}
+.addbtn{font:600 14px system-ui,sans-serif;background:var(--card);color:var(--accent);border:1px solid var(--line);border-radius:6px;padding:6px 12px;cursor:pointer}
+.addbtn:hover{border-color:var(--accent)}
+form.card{background:var(--card);border:1px solid var(--accent);border-radius:8px;padding:14px;display:grid;gap:10px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row label{display:grid;gap:3px;font-size:12px;color:var(--mute);flex:1 1 160px}
+.row label.wide{flex:3 1 260px}
+input[type=text],input[type=password],input[type=date],select{font:15px system-ui,sans-serif;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:6px;padding:7px 9px;width:100%}
+.check{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--mute)}
+.acts{display:flex;gap:8px;justify-content:flex-end}
+.acts button{font:600 14px system-ui,sans-serif;border-radius:6px;padding:7px 14px;cursor:pointer;border:1px solid var(--line);background:none;color:var(--ink)}
+.acts button.primary{background:var(--accent);border-color:var(--accent);color:var(--accentink)}
+section{background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+h2{font-size:14px;margin:0;padding:10px 14px;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);border-bottom:1px solid var(--line)}
+table{width:100%;border-collapse:collapse}
+th{font:600 12px system-ui,sans-serif;color:var(--mute);text-align:left;padding:6px 10px;text-transform:uppercase;letter-spacing:.04em}
+td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
+td.ck{width:32px;padding-right:0}
+td.d{white-space:nowrap;font-size:13px;font-variant-numeric:tabular-nums;width:1%}
+td.d.late{color:var(--warn);font-weight:600}
+td.d.none{color:var(--mute)}
+.name a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.tag{font-size:11px;color:var(--mute);border:1px solid var(--line);border-radius:4px;padding:0 4px;margin-left:6px;white-space:nowrap}
+.detail{color:var(--mute);font-size:13px;margin-top:2px}
+tr.done .name,tr.done .detail,tr.done td.d{color:var(--done);text-decoration:line-through}
+tr.done .name a{color:var(--done)}
+tr.saving{opacity:.6}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);margin:2px 0 0;cursor:pointer}
+.empty{color:var(--mute);padding:14px;margin:0}
+.note{color:var(--mute);font-size:13px;margin:0}
+.msg{border-radius:8px;padding:10px 14px;font-size:14px;background:var(--card);border:1px solid var(--warn);color:var(--warn)}
+@media (max-width:520px){td.d{white-space:normal}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+ <div><h1>Homework</h1><p class="sub" id="asof">Loading</p></div>
+ <div><button class="linkbtn" id="refresh" type="button">Refresh</button> &nbsp; <button class="linkbtn" id="signout" type="button" hidden>Sign out</button></div>
+</header>
+<div id="msg" class="msg" hidden></div>
+<form class="card" id="login" hidden>
+ <strong>Sign in</strong>
+ <p class="note">Paste your GitHub token for the Homework repo. It only stays in this browser.</p>
+ <div class="row"><label class="wide">Token<input type="password" id="tok" autocomplete="off" required></label></div>
+ <label class="check"><input type="checkbox" id="remember" checked> Remember on this device. Turn off on school or shared computers.</label>
+ <div class="acts"><button class="primary" type="submit">Open my list</button></div>
+</form>
+<div id="app" hidden>
+ <div class="tabs" role="tablist">
+  <button role="tab" id="t-hw" aria-selected="true">Homework<span class="n" id="n-hw"></span></button>
+  <button role="tab" id="t-tests" aria-selected="false">Tests and quizzes<span class="n" id="n-tests"></span></button>
+  <button role="tab" id="t-reminders" aria-selected="false">Reminders<span class="n" id="n-reminders"></span></button>
+ </div>
+ <div id="p-hw" role="tabpanel"></div>
+ <div id="p-tests" role="tabpanel" hidden></div>
+ <div id="p-reminders" role="tabpanel" hidden></div>
+ <p class="note" style="margin-top:14px">Check things off when you finish. Checked items stay crossed out until Sunday, then clear. Anything not checked carries over.</p>
+</div>
+</div>
+<script>
+const REPO="aquarius4310/Homework", ISSUE=1, API="https://api.github.com";
+const CLASSES=["AP Business","AP Calc AB","AP Human Geo","AP Lit","APUSH","Honors Physics","Mandarin IV","Other"];
+const KINDS={hw:{head:"Homework",item:"Homework",date:"Due",add:"homework"},tests:{head:"Tests and quizzes",item:"Test or quiz",date:"Date",add:"test or quiz"},reminders:{head:"Reminders",item:"Reminder",date:"When",add:"reminder"}};
+const kinds=Object.keys(KINDS);
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let token="",data={hw:[],tests:[],reminders:[]},open={},busy=false;
+
+function getTok(){try{return localStorage.getItem("hwtok")||sessionStorage.getItem("hwtok")||""}catch(e){return ""}}
+function setTok(t,remember){try{localStorage.removeItem("hwtok");sessionStorage.removeItem("hwtok");if(t)(remember?localStorage:sessionStorage).setItem("hwtok",t)}catch(e){}}
+function showMsg(t){$("msg").textContent=t;$("msg").hidden=!t}
+
+async function gh(method,path,body){
+ const r=await fetch(API+path,{method,headers:{Authorization:"Bearer "+token,Accept:"application/vnd.github+json","Content-Type":"application/json"},body:body?JSON.stringify(body):undefined,cache:"no-store"});
+ if(r.status===401){setTok("");token="";showLogin("That token did not work or has expired. Paste a new one.");throw new Error("auth")}
+ if(!r.ok)throw new Error("GitHub said "+r.status);
+ return r.json();
+}
+
+// ---- parse the issue body, same format sync.py writes ----
+const LINE=/^\s*[-*]\s+\[( |x|X)\]\s+(.*?)\s*$/;
+function parse(body){
+ const out={hw:[],tests:[],reminders:[]};let kind=null,cls="",last=null,meta="";
+ for(const raw of (body||"").split("\n")){
+  const line=raw.trim();
+  if(line.startsWith("Last Schoology check:"))meta=line;
+  if(line.startsWith("## ")){kind=kinds.find(k=>KINDS[k].head.toLowerCase()===line.slice(3).trim().toLowerCase())||null;cls="";last=null;continue}
+  if(line.startsWith("### ")){cls=line.slice(4).trim();last=null;continue}
+  const m=raw.match(LINE);
+  if(m&&kind){
+   let t=m[2];const idm=t.match(/<!--\s*id:([^\s>]+)\s*-->/);const id=idm?idm[1]:null;t=t.replace(/<!--.*?-->/g,"").trim();
+   const parts=t.split(" · ");let name=parts[0],url="";const lm=name.match(/^\[(.+)\]\((.+)\)$/);if(lm){name=lm[1];url=lm[2]}
+   let when="",mine=false;for(const p of parts.slice(1)){if(p==="added by you")mine=true;else when=p}
+   const late=/late\**$/.test(when);when=when.replace(/\*\*/g,"").replace(/, late$/,"");
+   last={id,raw,done:m[1].toLowerCase()==="x",name,url,when,late,mine,c:cls,detail:""};
+   out[kind].push(last);continue;
+  }
+  if(last&&raw.startsWith("  ")&&line)last.detail+=(last.detail?" ":"")+line;
+ }
+ return {out,meta};
+}
+
+async function load(){
+ const is=await gh("GET",`/repos/${REPO}/issues/${ISSUE}`);
+ const p=parse(is.body);data=p.out;
+ $("asof").textContent=(p.meta||"").replace(/\.$/,"")+". Changes save to GitHub right away.";
+ renderAll();
+ return is;
+}
+
+// edit the issue: fetch fresh body, apply fn, save
+async function edit(fn){
+ const is=await gh("GET",`/repos/${REPO}/issues/${ISSUE}`);
+ const body=fn(is.body||"");
+ if(body===is.body)return;
+ const saved=await gh("PATCH",`/repos/${REPO}/issues/${ISSUE}`,{body});
+ data=parse(saved.body).out;renderAll();
+}
+
+function toggle(kind,id,done){
+ return edit(body=>body.split("\n").map(l=>{
+  if(!l.includes(`<!--id:${id}-->`))return l;
+  return l.replace(/\[( |x|X)\]/,done?"[x]":"[ ]");
+ }).join("\n"));
+}
+function addItem(kind,c,name,date,notes){
+ const d=date?(()=>{const [y,m,dd]=date.split("-");return `${+m}/${+dd}/${y}`})():"";
+ const clean=s=>s.replace(/\|/g,"/").replace(/[\r\n]+/g," ").trim();
+ let line="- [ ] "+(kind==="reminders"?clean(name):clean(c)+" | "+clean(name))+(d?" | "+d:"");
+ return edit(body=>{
+  const lines=body.split("\n");const h="## "+KINDS[kind].head;
+  let i=lines.findIndex(l=>l.trim()===h);
+  if(i<0){lines.push("",h,line);return lines.join("\n")}
+  if(lines[i+1]&&lines[i+1].trim()==="Nothing here right now.")lines.splice(i+1,1);
+  lines.splice(i+1,0,line);
+  if(notes){}
+  return lines.join("\n");
+ });
+}
+
+// ---- render ----
+function formHTML(kind){
+ const cls=kind==="reminders"?"":`<label>Class<select id="f-${kind}-c">${CLASSES.map(c=>`<option>${esc(c)}</option>`).join("")}</select></label>`;
+ return `<form class="card" data-add="${kind}"><div class="row">${cls}<label class="wide">${KINDS[kind].item}<input type="text" id="f-${kind}-n" required placeholder="${kind==="hw"?"Read pages 40-52":kind==="tests"?"Unit 2 quiz":"Bring lab goggles"}"></label><label>${KINDS[kind].date}${kind==="reminders"?" (optional)":""}<input type="date" id="f-${kind}-d"></label></div><div class="acts"><button type="button" data-cancel="${kind}">Cancel</button><button type="submit" class="primary">Add</button></div></form>`;
+}
+function rowHTML(kind,x){
+ const name=(x.url?`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.name)}</a>`:esc(x.name))+(x.mine?`<span class="tag">added by you</span>`:"")+(!x.id?`<span class="tag">saving</span>`:"");
+ const when=x.when?`<td class="d${x.late&&!x.done?" late":""}">${esc(x.when)}${x.late&&!x.done?", late":""}</td>`:`<td class="d none"></td>`;
+ const dis=!x.id||busy?"disabled":"";
+ return `<tr class="${x.done?"done":""}${!x.id?" saving":""}"><td class="ck"><input type="checkbox" data-kind="${kind}" data-id="${esc(x.id||"")}" ${x.done?"checked":""} ${dis} aria-label="Done: ${esc(x.name)}"></td><td><div class="name">${name}</div>${x.detail?`<div class="detail">${esc(x.detail)}</div>`:""}</td>${when}</tr>`;
+}
+function render(kind){
+ const el=$("p-"+kind),list=data[kind];
+ $("n-"+kind).textContent=list.filter(x=>!x.done).length;
+ const head=`<tr><th></th><th>${KINDS[kind].item}</th><th>${KINDS[kind].date}</th></tr>`;
+ let body;
+ if(!list.length)body=`<section><p class="empty">Nothing here right now.</p></section>`;
+ else if(kind==="reminders")body=`<section><table><thead>${head}</thead><tbody>${list.map(x=>rowHTML(kind,x)).join("")}</tbody></table></section>`;
+ else{const g={};list.forEach(x=>(g[x.c||"Other"]=g[x.c||"Other"]||[]).push(x));
+  body=Object.keys(g).map(c=>`<section><h2>${esc(c)}</h2><table><thead>${head}</thead><tbody>${g[c].map(x=>rowHTML(kind,x)).join("")}</tbody></table></section>`).join("")}
+ const bar=open[kind]?formHTML(kind):`<div class="bar"><button type="button" class="addbtn" data-open="${kind}">+ Add ${KINDS[kind].add}</button></div>`;
+ el.innerHTML=`<div class="panel">${bar}${body}</div>`;
+}
+function renderAll(){kinds.forEach(k=>{if(!open[k])render(k);else $("n-"+k).textContent=data[k].filter(x=>!x.done).length})}
+function select(k){kinds.forEach(x=>{$("t-"+x).setAttribute("aria-selected",x===k);$("p-"+x).hidden=x!==k});try{localStorage.setItem("hwtab",k)}catch(e){}}
+kinds.forEach(k=>$("t-"+k).onclick=()=>select(k));
+try{const t=localStorage.getItem("hwtab");if(kinds.includes(t))select(t)}catch(e){}
+
+document.addEventListener("click",e=>{
+ const o=e.target.closest("[data-open]");if(o){open[o.dataset.open]=true;render(o.dataset.open);$(`f-${o.dataset.open}-n`).focus();return}
+ const c=e.target.closest("[data-cancel]");if(c){open[c.dataset.cancel]=false;render(c.dataset.cancel)}
+});
+document.addEventListener("change",async e=>{
+ const cb=e.target;if(!cb.dataset||!cb.dataset.id)return;
+ const kind=cb.dataset.kind,id=cb.dataset.id,done=cb.checked;
+ const it=data[kind].find(x=>x.id===id);if(it){it.done=done;render(kind)}
+ busy=true;showMsg("");
+ try{await toggle(kind,id,done)}catch(err){if(err.message!=="auth"){if(it){it.done=!done;render(kind)}showMsg("Could not save that check. "+err.message)}}
+ busy=false;renderAll();
+});
+document.addEventListener("submit",async e=>{
+ const f=e.target;
+ if(f.id==="login"){e.preventDefault();token=$("tok").value.trim();setTok(token,$("remember").checked);$("tok").value="";start();return}
+ if(!f.dataset.add)return;e.preventDefault();
+ const kind=f.dataset.add,v=k=>($(`f-${kind}-${k}`)||{}).value||"";
+ const name=v("n").trim();if(!name)return;
+ const c=v("c")||"Other",date=v("d");
+ open[kind]=false;
+ data[kind].unshift({id:null,done:false,name,c:kind==="reminders"?"":c,when:date?new Date(date+"T12:00").toLocaleDateString([], {weekday:"short",month:"short",day:"numeric"}):"",mine:kind!=="reminders",detail:""});
+ render(kind);showMsg("");
+ try{await addItem(kind,c,name,date);setTimeout(()=>load().catch(()=>{}),70000)}catch(err){if(err.message!=="auth")showMsg("Could not add that. "+err.message);load().catch(()=>{})}
+});
+$("refresh").onclick=()=>load().catch(err=>{if(err.message!=="auth")showMsg("Could not load. "+err.message)});
+$("signout").onclick=()=>{setTok("");token="";$("app").hidden=true;showLogin("")};
+function showLogin(m){$("login").hidden=false;$("app").hidden=true;$("signout").hidden=true;$("asof").textContent="Signed out";showMsg(m||"")}
+async function start(){
+ token=token||getTok();
+ if(!token){showLogin("");return}
+ $("login").hidden=true;$("app").hidden=false;$("signout").hidden=false;
+ try{await load();showMsg("")}catch(err){if(err.message!=="auth")showMsg("Could not load your list. "+err.message)}
+}
+start();
+setInterval(()=>{if(token&&!busy&&!kinds.some(k=>open[k])&&document.visibilityState==="visible")load().catch(()=>{})},120000);
+</script>
+</body>
+</html>
