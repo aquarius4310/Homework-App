@@ -116,10 +116,10 @@ function parse(body){
    const late=/late\**$/.test(when);when=when.replace(/\*\*/g,"").replace(/, late$/,"").replace(/^due /,"").replace(/ \d{1,2}:\d{2} ?[ap]m/i,"");
    let c=cls;
    if(!id&&kind!=="reminders"&&name.includes(" | ")){const ps=name.split(" | ");c=ps[0];name=ps[1]||name;if(ps[2])when=ps[2]}
-   last={id,done:m[1].toLowerCase()==="x",name,url,when,late,mine,c,detail:""};
+   last={id,done:m[1].toLowerCase()==="x",name,url,when,late,mine,c,lines:[]};
    out[kind].push(last);continue;
   }
-  if(last&&raw.startsWith("  ")&&line)last.detail+=(last.detail?" ":"")+line;
+  if(last&&raw.startsWith("  ")&&line)last.lines.push(line);
  }
  return {out,meta};
 }
@@ -161,7 +161,7 @@ function itemHTML(x){
  const name=(x.url?`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.name)}</a>`:esc(x.name))+(x.mine?`<span class="tag">yours</span>`:"")+(!x.id?`<span class="tag">saving</span>`:"");
  const cls=x.late&&!x.done?"late":(!x.done&&soon(x.when)?"soon":"");
  const when=x.when?`<span class="when ${cls}">${esc(x.when)}${x.late&&!x.done?", late":""}</span>`:`<span></span>`;
- return `<li class="${x.done?"done":""}${!x.id?" saving":""}"><input type="checkbox" data-id="${esc(x.id||"")}" ${x.done?"checked":""} ${!x.id||busy?"disabled":""} aria-label="Done: ${esc(x.name)}"><div class="name">${name}${x.detail?`<div class="detail">${esc(x.detail)}</div>`:""}</div>${when}</li>`;
+ return `<li class="${x.done?"done":""}${!x.id?" saving":""}"><input type="checkbox" data-id="${esc(x.id||"")}" ${x.done?"checked":""} ${!x.id||busy?"disabled":""} aria-label="Done: ${esc(x.name)}"><div class="name">${name}${(x.lines||[]).map(l=>`<div class="detail">${esc(l)}</div>`).join("")}</div>${when}</li>`;
 }
 function listHTML(list,emptyText){return list.length?`<ul>${list.map(itemHTML).join("")}</ul>`:`<p class="none">${emptyText}</p>`}
 function formHTML(key,isRem){
@@ -200,7 +200,7 @@ document.addEventListener("submit",async e=>{
  const kind=isRem?"reminders":$("f-kind").value,name=$("f-name").value.trim(),date=$("f-date").value;
  if(!name)return;
  openForm=null;
- data[kind].unshift({id:null,done:false,name,c:isRem?"":key,when:date?new Date(date+"T12:00").toLocaleDateString([], {weekday:"short",month:"short",day:"numeric"}):"",mine:!isRem,detail:""});
+ data[kind].unshift({id:null,done:false,name,c:isRem?"":key,when:date?new Date(date+"T12:00").toLocaleDateString([], {weekday:"short",month:"short",day:"numeric"}):"",mine:!isRem,lines:[]});
  render(true);showMsg("");
  try{await addItem(kind,key,name,date);setTimeout(()=>load().catch(()=>{}),70000)}catch(err){if(err.message!=="auth")showMsg("Could not add that. "+err.message);load().catch(()=>{})}
 });
