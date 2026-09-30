@@ -57,6 +57,9 @@ form.login{background:var(--card);border:1px solid var(--accent);border-radius:1
 form.login input[type=password]{width:100%;font-size:15px;padding:8px 10px}
 .check{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--mute)}
 .note{color:var(--mute);font-size:13px;margin:0}
+.forcebox{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:8px;max-width:640px}
+.forcebox textarea{width:100%;font:13px/1.4 ui-monospace,Consolas,monospace;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:6px;padding:8px;resize:vertical}
+.btnlink{font:600 13px system-ui,sans-serif;border-radius:6px;padding:6px 12px;text-decoration:none;background:var(--accent);color:var(--accentink);border:1px solid var(--accent)}
 .msg{border-radius:8px;padding:10px 14px;font-size:14px;background:var(--card);border:1px solid var(--warn);color:var(--warn)}
 </style>
 </head>
@@ -64,9 +67,15 @@ form.login input[type=password]{width:100%;font-size:15px;padding:8px 10px}
 <div class="wrap">
 <header>
  <div><h1>Homework</h1><p class="sub" id="asof">Loading</p></div>
- <div><button class="linkbtn" id="refresh" type="button">Refresh</button> &nbsp; <button class="linkbtn" id="signout" type="button" hidden>Sign out</button></div>
+ <div><button class="linkbtn" id="force" type="button">Force check</button> &nbsp; <button class="linkbtn" id="refresh" type="button">Refresh</button> &nbsp; <button class="linkbtn" id="signout" type="button" hidden>Sign out</button></div>
 </header>
 <div id="msg" class="msg" hidden></div>
+<section id="forcebox" class="forcebox" hidden>
+ <strong>Force a check</strong>
+ <p class="note">Only needed if a check failed or you want one right now. Paste this into Claude, on your phone or any computer. Your laptop at home still has to be on with the Claude app open, because the check runs there. Results show up here and in your email in about 5 to 10 minutes.</p>
+ <textarea id="forcetext" readonly rows="5"></textarea>
+ <div class="acts"><button type="button" id="forceclose">Close</button><button type="button" id="forcecopy">Copy</button><a class="primary btnlink" id="forceopen" target="_blank" rel="noopener">Open Claude with it</a></div>
+</section>
 <form class="login" id="login" method="post" action="#" hidden>
  <strong>Sign in</strong>
  <p class="note">Paste your GitHub token for the Homework repo. If your browser offers to save it as a password, say yes, then it fills in on your other devices too.</p>
@@ -81,8 +90,18 @@ form.login input[type=password]{width:100%;font-size:15px;padding:8px 10px}
 </div>
 </div>
 <script>
-const REPO="aquarius4310/Homework", ISSUE=1, API="https://api.github.com";
-const CLASSES=["AP Business","AP Calc AB","AP Human Geo","AP Lit","APUSH","Honors Physics","Mandarin IV"];
+// The page works out whose list to show from its own address.
+// https://NAME.github.io/Homework-App/ shows the list in NAME/Homework. Nothing to edit.
+const OWNER=location.hostname.endsWith(".github.io")?location.hostname.split(".")[0]:"aquarius4310";
+const REPO=new URLSearchParams(location.search).get("repo")||OWNER+"/Homework", API="https://api.github.com";
+let ISSUE=null, CLASSES=[];
+// finds the pinned "Homework" issue that holds the list
+async function issueNo(t){
+ if(ISSUE)return ISSUE;
+ try{const r=await fetch(`${API}/repos/${REPO}/issues?state=all&per_page=100&t=${Date.now()}`,{headers:{Authorization:"Bearer "+t,Accept:"application/vnd.github+json"},cache:"no-store"});
+  if(r.ok){const l=(await r.json()).filter(i=>!i.pull_request&&i.title==="Homework").sort((a,b)=>a.number-b.number);if(l.length)ISSUE=l[0].number}}catch(e){}
+ return ISSUE||1;
+}
 const HEADS={hw:"Homework",tests:"Tests and quizzes",reminders:"Reminders"};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -109,6 +128,7 @@ async function hwApi(method,path,body){
  return {status:r.status,json:await r.json()};
 }
 window.hwCheck=async function(){
+ const t=getTok();if(!t)return "NO_TOKEN";await issueNo(t);
  const r=await hwApi("GET",`/repos/${REPO}/issues/${ISSUE}?t=${Date.now()}`);if(r.err)return r.err;
  const body=r.json.body||"";const st=body.match(/<!-- state lastCheckAt=(\S*) maxId=(\d+) -->/)||[];
  const ny=d=>new Date(d.toLocaleString("en-US",{timeZone:"America/New_York"}));
@@ -118,6 +138,7 @@ window.hwCheck=async function(){
 };
 window.hwSend=async function(scrape){
  if(!scrape||typeof scrape!=="object"||!scrape.runId||!Array.isArray(scrape.items))return "BAD_SCRAPE";
+ const t=getTok();if(!t)return "NO_TOKEN";await issueNo(t);
  const r=await hwApi("POST",`/repos/${REPO}/issues/${ISSUE}/comments`,{body:"<!-- scrape -->\n```json\n"+JSON.stringify(scrape)+"\n```"});
  return r.err||r.status;
 };
@@ -144,16 +165,20 @@ function parse(body){
   }
   if(last&&raw.startsWith("  ")&&line)last.lines.push(line);
  }
+ const cm=(body||"").match(/<!-- classes: (.*?) -->/);
+ if(cm)CLASSES=cm[1].split("|").map(x=>x.trim()).filter(Boolean);
  return {out,meta};
 }
 
 async function load(force){
+ await issueNo(token);
  const is=await gh("GET",`/repos/${REPO}/issues/${ISSUE}?t=${Date.now()}`);
  const p=parse(is.body);data=p.out;
  $("asof").textContent=(p.meta||"").replace(/\.$/,"")+".";
  render(force);
 }
 async function edit(fn){
+ await issueNo(token);
  const is=await gh("GET",`/repos/${REPO}/issues/${ISSUE}`);
  const body=fn(is.body||"");
  if(body===is.body)return;
@@ -233,6 +258,14 @@ $("refresh").onclick=async()=>{
  catch(err){b.textContent="Refresh";if(err.message!=="auth")showMsg("Could not load. "+err.message)}
  setTimeout(()=>{b.textContent="Refresh";b.disabled=false},4000);
 };
+const FORCE_PROMPT="Force my homework check now. Find my scheduled task whose name starts with \"Schoology HW check\" and run it right now, adding this message to that run: \"FORCE CHECK. The user asked for a check now. In step 1, treat the decision as RUN even if hwCheck says SKIP. Do everything else the same.\" Do not do the check yourself in this chat, just start the task. Then tell me it started and that the results will be on my homework page and in my email in about 5 to 10 minutes. If you cannot run scheduled tasks from here, tell me to paste this into the Claude desktop app instead.";
+$("force").onclick=async()=>{
+ $("forcetext").value=FORCE_PROMPT;$("forceopen").href="https://claude.ai/new?q="+encodeURIComponent(FORCE_PROMPT);
+ $("forcebox").hidden=false;
+ try{await navigator.clipboard.writeText(FORCE_PROMPT);$("forcecopy").textContent="Copied"}catch(e){$("forcecopy").textContent="Copy"}
+};
+$("forcecopy").onclick=async()=>{try{await navigator.clipboard.writeText(FORCE_PROMPT)}catch(e){$("forcetext").select();document.execCommand("copy")}$("forcecopy").textContent="Copied"};
+$("forceclose").onclick=()=>{$("forcebox").hidden=true;$("forcecopy").textContent="Copy"};
 $("signout").onclick=()=>{setTok("");token="";showLogin("")};
 function showLogin(m){$("login").hidden=false;$("app").hidden=true;$("signout").hidden=true;$("asof").textContent="Signed out";showMsg(m||"")}
 async function start(){
@@ -244,5 +277,6 @@ async function start(){
 start();
 setInterval(()=>{if(token&&!busy&&!openForm&&document.visibilityState==="visible")load().catch(()=>{})},120000);
 </script>
+<div id="made-by" style="position:fixed;right:10px;bottom:8px;font-size:11px;opacity:.6;pointer-events:none;z-index:9999">By, Stu</div>
 </body>
 </html>

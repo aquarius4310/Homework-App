@@ -22,7 +22,8 @@ concurrency:
 
 jobs:
   sync:
-    if: (github.event_name != 'issues' && github.event_name != 'issue_comment') || github.event.issue.title == 'Homework'
+    # only runs in the private repo named Homework, never in the public page repo
+    if: endsWith(github.repository, '/Homework') && ((github.event_name != 'issues' && github.event_name != 'issue_comment') || github.event.issue.title == 'Homework')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

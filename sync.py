@@ -39,8 +39,12 @@ except FileNotFoundError:
 CLASSES = CONFIG.get("classes", [])
 # short names you might type when adding things by hand, like "calc" for "AP Calc AB"
 ALIASES = {k.lower(): v for k, v in CONFIG.get("aliases", {}).items()}
-# your homework page, like https://yourname.github.io/Homework-App/
-PAGE = CONFIG.get("page", "")
+# your homework page. Defaults to https://<your GitHub name>.github.io/Homework-App/
+PAGE = CONFIG.get("page") or (
+    f"https://{os.environ['GITHUB_REPOSITORY'].split('/')[0]}.github.io/Homework-App/"
+    if os.environ.get("GITHUB_REPOSITORY") else "")
+# every class name seen so far, filled in by main()
+KNOWN = list(CLASSES)
 SGY = CONFIG.get("schoology", "https://basised-dc.schoology.com")
 
 
@@ -125,10 +129,10 @@ def fix_class(name):
     aliases = ALIASES
     if low in aliases:
         return aliases[low]
-    for c in CLASSES:
+    for c in KNOWN:
         if low == c.lower():
             return c
-    for c in CLASSES:
+    for c in KNOWN:
         if len(low) >= 4 and low in c.lower():
             return c
     return name.strip() or "Other"
@@ -224,6 +228,7 @@ def render(items, for_issue=True):
     if for_issue:
         lines += [MARK,
                   f"<!-- state lastCheckAt={items.get('lastCheckAt') or ''} maxId={items.get('maxId') or 0} -->",
+                  f"<!-- classes: {'|'.join(KNOWN)} -->",
                   f"Last Schoology check: {stamp or 'not yet'}. List updated {t.strftime('%a %b')} {t.day}, {t.strftime('%I:%M %p').lstrip('0').lower()}.",
                   "",
                   "Check a box when you finish. Checked items clear on Sunday, anything not checked carries over.",
@@ -335,12 +340,20 @@ def scrape_from_comment(repo):
         print("could not delete comment:", e)
 
 
+def remember_classes(items):
+    """Keep a list of every class ever seen so its card stays on the page even when empty."""
+    seen = set(items.get("classes", [])) | {i["c"] for i in items["items"] if i.get("kind") != "reminders" and i.get("c")}
+    items["classes"] = sorted(seen)
+    KNOWN[:] = list(CLASSES) + [c for c in items["classes"] if c not in CLASSES]
+
+
 def main():
     dry = "--dry-run" in sys.argv
     if not dry:
         scrape_from_comment(os.environ.get("GITHUB_REPOSITORY", ""))
     items = load(ITEMS, {"items": [], "cleared": []})
     items.setdefault("cleared", [])
+    remember_classes(items)
     scrape = load(SCRAPE, None)
     repo = os.environ.get("GITHUB_REPOSITORY", "")
 
@@ -371,6 +384,7 @@ def main():
         else:
             items["lastCheck"] = (items.get("lastCheck") or "") + " (latest check failed, " + scrape.get("reason", "unknown") + ")"
 
+    remember_classes(items)
     note = scrape.get("summary") if scrape and scrape.get("runId") != items.get("lastNote") else None
     body = render(items, True)
     if dry:
