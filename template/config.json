@@ -1,0 +1,5 @@
+{
+  "classes": ["AP Calc AB", "AP Lit", "APUSH"],
+  "aliases": {"calc": "AP Calc AB", "lit": "AP Lit", "history": "APUSH"},
+  "page": "https://YOUR-GITHUB-NAME.github.io/Homework-App/"
+}

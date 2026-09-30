@@ -1,0 +1,47 @@
+name: Sync homework
+
+on:
+  push:
+    branches: [main]
+    paths: ["data/scrape.json"]
+  issues:
+    types: [edited, reopened]
+  issue_comment:
+    types: [created]
+  schedule:
+    - cron: "15 11 * * *"   # every day around 7:15 am New York time, refreshes dates and saves any checks
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: homework-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: (github.event_name != 'issues' && github.event_name != 'issue_comment') || github.event.issue.title == 'Homework'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Sync list with the Homework issue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python sync.py
+      - name: Commit and push changes
+        run: |
+          git config user.name "homework-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A data README.md
+          if git diff --cached --quiet; then
+            echo "nothing changed"
+          else
+            git commit -m "Update homework list $(TZ=America/New_York date '+%a %b %-d %-I:%M %p')"
+            git pull --rebase origin main
+            git push
+          fi
