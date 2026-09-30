@@ -47,7 +47,7 @@
         const feed = doc(JSON.parse(await get(`/course/${c.nid}/feed?page=0`)).output || "");
         const authors = {};
         for (const li of [...feed.querySelectorAll("li[id^='edge-assoc-']")].slice(0, 6)) {
-          const who = (li.querySelector(".update-sentence-inner a[href^='/user/'], a[href^='/user/']:not(:empty)") || {}).textContent || "";
+          const who = ([...li.querySelectorAll("a[href^='/user/']")].map((a) => a.textContent.trim()).find(Boolean)) || "";
           const when = (li.querySelector(".small.gray, .datetime") || {}).textContent || "";
           const at = new Date(when.replace(" at ", " "));
           if (!isNaN(at) && Date.now() - at > 14 * 864e5) continue;
@@ -96,7 +96,9 @@
         const ym = new Date().toISOString().slice(0, 7);
         const ev = JSON.parse(await get(`/calendar/${calId}/${ym}?ajax=1&start=${s}&end=${e}`));
         for (const x of ev) {
-          if (x.e_type === "folder" || /student hour/i.test(x.title)) continue;
+          if (x.e_type === "folder" || /student hours?/i.test(x.title)) continue;
+          // plain calendar events only count if they look like a test or quiz
+          if (x.e_type === "event" && !TEST.test(x.title.replace(/<[^>]+>/g, ""))) continue;
           const href = (x.title.match(/href="([^"]+)"/) || [])[1] || "";
           const name = x.title.replace(/<[^>]+>/g, "").trim();
           const due = (x.start || "").slice(0, 10);
@@ -120,10 +122,10 @@
         for (const ev of doc(h).querySelectorAll(".upcoming-event")) {
           const a = ev.querySelector("a"); if (!a) continue;
           const txt = ev.textContent.replace(/\s+/g, " ");
-          const dueTxt = ((txt.match(/due (?:on )?(.+?)$/i) || [])[1] || "").trim();
+          const start = +ev.getAttribute("data-start");
           const href = a.getAttribute("href") || "";
-          const secId = (href.match(/course\/(\d+)/) || [])[1] || "";
-          personal.push({ id: "sgy-" + nid(href), n: a.textContent.trim().slice(0, 140), due: parseDue(dueTxt), late: k === "overdue", url: href, sec: secId });
+          const cls = ((ev.querySelector("[aria-label]") || {}).getAttribute ? ev.querySelector("[aria-label]").getAttribute("aria-label") : "").replace(/ ?: Section.*/, "").trim();
+          personal.push({ id: "sgy-" + nid(href), n: a.textContent.trim().slice(0, 140), due: start ? iso(new Date(start * 1000)) : "", late: k === "overdue", url: href, title: cls });
         }
       } catch (e) {}
     }
