@@ -146,6 +146,7 @@ def read_issue(body, items):
     """Copy check states and hand-added lines from the issue into items. Returns count of changes."""
     by_id = {i["id"]: i for i in items["items"]}
     kind, cls, changes = None, None, 0
+    seen = set()
     for raw in (body or "").splitlines():
         line = raw.strip()
         if line.startswith("## "):
@@ -162,6 +163,7 @@ def read_issue(body, items):
         text = m[2]
         idm = ID.search(text)
         if idm:
+            seen.add(idm[1])
             it = by_id.get(idm[1])
             if it and it.get("done") != done:
                 it["done"] = done
@@ -190,7 +192,16 @@ def read_issue(body, items):
             "n": name, "detail": "", "due": parse_date(date), "dueNote": "" if parse_date(date) or not date else date,
             "url": "", "src": "manual", "done": done, "added": now().date().isoformat(),
         })
+        seen.add(new_id)
         changes += 1
+    # things you added yourself and then deleted from the list are removed for good
+    if MARK in (body or ""):
+        gone = [i for i in items["items"] if i.get("src") == "manual" and i["id"] not in seen]
+        for i in gone:
+            items["items"].remove(i)
+            if i["id"] not in items["cleared"]:
+                items["cleared"].append(i["id"])
+            changes += 1
     return changes
 
 
