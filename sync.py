@@ -320,24 +320,38 @@ SCRAPE_MARK = "<!-- scrape -->"
 
 
 def scrape_from_comment(repo):
-    """If this run was started by a comment holding scrape data, save it to data/scrape.json and delete the comment."""
+    """Pick up scrape data that the daily check posted as a comment on the Homework issue.
+    Looks at every open scrape comment, not just the one that started this run, so nothing is lost
+    if GitHub skipped a run. Saves the newest one to data/scrape.json and deletes them all."""
+    found = []
     path = os.environ.get("GITHUB_EVENT_PATH")
-    if not path or not Path(path).exists():
+    if path and Path(path).exists():
+        c = json.loads(Path(path).read_text()).get("comment") or {}
+        if (c.get("body") or "").startswith(SCRAPE_MARK):
+            found.append(c)
+    issue_no = load(ITEMS, {}).get("issue")
+    if issue_no:
+        try:
+            for c in gh("GET", f"/repos/{repo}/issues/{issue_no}/comments?per_page=100"):
+                if (c.get("body") or "").startswith(SCRAPE_MARK) and all(c["id"] != f["id"] for f in found):
+                    found.append(c)
+        except Exception as e:
+            print("could not list comments:", e)
+    if not found:
         return
-    event = json.loads(Path(path).read_text())
-    c = event.get("comment") or {}
-    body = c.get("body") or ""
-    if not body.startswith(SCRAPE_MARK):
-        return
-    m = re.search(r"```(?:json)?\s*(\{.*\})\s*```", body, re.S)
+    found.sort(key=lambda c: c.get("created_at") or "")
+    m = re.search(r"```(?:json)?\s*(\{.*\})\s*```", found[-1]["body"], re.S)
     if m:
         data = json.loads(m[1])
-        save(SCRAPE, data)
-        print("scrape data saved from comment", data.get("runId"))
-    try:
-        gh("DELETE", f"/repos/{repo}/issues/comments/{c['id']}")
-    except Exception as e:
-        print("could not delete comment:", e)
+        old = load(SCRAPE, None) or {}
+        if data.get("runId") != old.get("runId"):
+            save(SCRAPE, data)
+            print("scrape data saved from comment", data.get("runId"))
+    for c in found:
+        try:
+            gh("DELETE", f"/repos/{repo}/issues/comments/{c['id']}")
+        except Exception as e:
+            print("could not delete comment:", e)
 
 
 def remember_classes(items):

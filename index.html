@@ -278,5 +278,6 @@ start();
 setInterval(()=>{if(token&&!busy&&!openForm&&document.visibilityState==="visible")load().catch(()=>{})},120000);
 </script>
 <div id="made-by" style="position:fixed;right:10px;bottom:8px;font-size:11px;opacity:.6;pointer-events:none;z-index:9999">By, Stu</div>
+<script>/* Stu's own page does not show the credit */if(location.hostname==="aquarius4310.github.io")document.getElementById("made-by").remove();</script>
 </body>
 </html>
