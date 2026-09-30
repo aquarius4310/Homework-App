@@ -99,6 +99,29 @@ async function gh(method,path,body){
  return r.json();
 }
 
+// ---- helpers for the daily Schoology check ----
+// The check calls these, so it never reads or handles the token itself.
+// They only talk to this one issue in the Homework repo.
+async function hwApi(method,path,body){
+ const t=getTok();if(!t)return {err:"NO_TOKEN"};
+ const r=await fetch(API+path,{method,headers:{Authorization:"Bearer "+t,Accept:"application/vnd.github+json","Content-Type":"application/json"},body:body?JSON.stringify(body):undefined,cache:"no-store"});
+ if(!r.ok)return {err:"GITHUB_ERROR "+r.status};
+ return {status:r.status,json:await r.json()};
+}
+window.hwCheck=async function(){
+ const r=await hwApi("GET",`/repos/${REPO}/issues/${ISSUE}?t=${Date.now()}`);if(r.err)return r.err;
+ const body=r.json.body||"";const st=body.match(/<!-- state lastCheckAt=(\S*) maxId=(\d+) -->/)||[];
+ const ny=d=>new Date(d.toLocaleString("en-US",{timeZone:"America/New_York"}));
+ const nowNY=ny(new Date());const tgt=new Date(nowNY);tgt.setHours(16,0,0,0);if(nowNY<tgt)tgt.setDate(tgt.getDate()-1);
+ const last=st[1]?ny(new Date(st[1])):null;const run=!last||last<tgt;
+ return JSON.stringify({decision:run?"RUN":"SKIP",catchup:run&&nowNY.getHours()<16&&!!last,lastCheckAt:st[1]||"",maxId:+(st[2]||0),body});
+};
+window.hwSend=async function(scrape){
+ if(!scrape||typeof scrape!=="object"||!scrape.runId||!Array.isArray(scrape.items))return "BAD_SCRAPE";
+ const r=await hwApi("POST",`/repos/${REPO}/issues/${ISSUE}/comments`,{body:"<!-- scrape -->\n```json\n"+JSON.stringify(scrape)+"\n```"});
+ return r.err||r.status;
+};
+
 // ---- parse the issue body, same format sync.py writes ----
 const LINE=/^\s*[-*]\s+\[( |x|X)\]\s+(.*?)\s*$/;
 function parse(body){
